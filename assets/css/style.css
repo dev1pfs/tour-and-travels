@@ -22,7 +22,7 @@
 }
 
 body {
-  font-family: var(---secondary-font);
+  font-family: var(--primary-font);
   font-size: var(--body-font-size);
   line-height: var(--line-height);
   font-weight: 400;
@@ -2559,9 +2559,9 @@ main {
   transition: var(--transition);
 }
 
-.info a:hover {
+/* .info a:hover {
   color: var(--primary-color);
-}
+} */
 
 .map iframe {
   height: 395px;

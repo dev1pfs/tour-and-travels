@@ -23,7 +23,7 @@ if (isset($_SESSION['admin_id'])) {
 <body>
 
     <div class="cursor"></div>
-    <div id="preloader">
+    <!-- <div id="preloader">
         <div class="circle"></div>
         <div class="text">
             <span>T</span>
@@ -38,7 +38,7 @@ if (isset($_SESSION['admin_id'])) {
             <span>L</span>
             <span>S</span>
         </div>
-    </div>
+    </div> -->
     <div class="site">
         <header class="site-header">
             <div class="container">
@@ -62,7 +62,7 @@ if (isset($_SESSION['admin_id'])) {
                                 <a class="nav-link" href="/about.php">About Us</a>
                             </li>
                             <li>
-                                <a class="nav-link" href="/destinations-page.php">destinations</a>
+                                <a class="nav-link" href="/destinations-page.php">Destinations</a>
                             </li>
 
                             <li>

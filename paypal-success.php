@@ -25,7 +25,7 @@ $amount = $data['amount'];
 try {
     $conn->begin_transaction();
 
-    $stmt = $conn->prepare("INSERT INTO orders (user_id, paypal_order_id, total_amount, status) VALUES (?, ?, ?, 'Completed')");
+    $stmt = $conn->prepare("INSERT INTO orders (user_id, paypal_order_id, total_amount, status) VALUES (?, ?, ?, 'Pending')");
     $stmt->bind_param("isd", $user_id, $paypal_order_id, $amount);
     $stmt->execute();
     $order_id = $conn->insert_id;
