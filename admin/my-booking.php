@@ -14,6 +14,8 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+require_once __DIR__ . '/../config.php';
+
 // Fetch Orders
 $sql = "
     SELECT 
@@ -30,11 +32,15 @@ $sql = "
     FROM orders o
     JOIN order_items oi ON o.id = oi.order_id
     JOIN packages p ON oi.package_id = p.id
+    WHERE o.deleted_at IS NULL
     ORDER BY o.id DESC, oi.id DESC
 ";
 
 $orderResult = $conn->query($sql);
 $totalOrders = $orderResult ? $orderResult->num_rows : 0;
+
+$trashResult = $conn->query("SELECT COUNT(*) AS total FROM orders WHERE deleted_at IS NOT NULL");
+$trash_count = ($trashResult) ? (int)$trashResult->fetch_assoc()['total'] : 0;
 
 $commentResult = $conn->query("SELECT COUNT(*) AS total FROM comments");
 $comment_count = ($commentResult) ? $commentResult->fetch_assoc()['total'] : 0;
@@ -68,7 +74,7 @@ $stmtUser->close();
                         <a class="adminbar-link" href="/index.php"><i class="fa-solid fa-house"></i> Tour and Travels</a>
                         <ul class="adminbar-submenu">
                             <li><a href="/index.php">Visit Site</a></li>
-                            <li><a href="/cart.php">Visit Store</a></li>
+                            <li><a href="/shop.php">Visit Store</a></li>
                         </ul>
                     </li>
                     <li class="admin-comment">
@@ -80,7 +86,7 @@ $stmtUser->close();
             </div>
             <div class="adminbar-right">
                 <div class="user-menu">
-                    <span class="btn btn-primary user-name"><?= htmlspecialchars($user['fullname'] ?? 'Admin') ?></span>
+                    <a href="./profile.php" class="btn btn-primary user-name"><?= htmlspecialchars($user['fullname'] ?? 'Admin') ?></a>
                     <a href="/logout.php" class="logout-btn btn btn-primary">Logout</a>
                 </div>
             </div>
@@ -96,6 +102,7 @@ $stmtUser->close();
             </div>
             <ul class="sidebar-menu">
                 <li class="nav-link"><a href="./dashboard.php">Dashboard</a></li>
+                <li class="nav-link"><a href="./profile.php">Profile</a></li>
                 <li class="nav-link">
                     <a href="#" class="has-submenu">Destinations <i class="fa-solid fa-angle-right"></i></a>
                     <ul class="submenu">
@@ -113,6 +120,7 @@ $stmtUser->close();
                 <li class="nav-link"><a href="./users.php">Users</a></li>
                 <li class="nav-link active"><a href="./my-booking.php">Bookings</a></li>
                 <li class="nav-link"><a href="./comments.php">Comments</a></li>
+                <li class="nav-link"><a href="./messages.php">Mail</a></li>
             </ul>
         </div>
 
@@ -120,29 +128,29 @@ $stmtUser->close();
             <div class="booking-content">
 
                 <?php if ($msg === "booked_success"): ?>
-                    <div class="msg success" style="background: #d4edda; color: #155724; padding: 10px; margin-bottom: 20px; border-radius: 4px;">New booking placed successfully (Status: Pending).</div>
+                    <div class="msg-info">New booking placed successfully (Status: Pending).</div>
                 <?php elseif ($msg === "status_updated"): ?>
-                    <div class="msg success" style="background: #d4edda; color: #155724; padding: 10px; margin-bottom: 20px; border-radius: 4px;">Order status updated successfully.</div>
+                    <div class="msg-info">Order status updated successfully.</div>
                 <?php elseif ($msg === "deleted"): ?>
-                    <div class="msg success" style="background: #d4edda; color: #155724; padding: 10px; margin-bottom: 20px; border-radius: 4px;">Selected booking(s) deleted successfully.</div>
+                    <div class="msg-warn">Selected booking(s) moved to trash.</div>
                 <?php elseif ($msg === "all_deleted"): ?>
-                    <div class="msg success" style="background: #d4edda; color: #155724; padding: 10px; margin-bottom: 20px; border-radius: 4px;">All bookings deleted successfully.</div>
+                    <div class="msg-warn">All bookings moved to trash.</div>
                 <?php elseif ($msg === "error"): ?>
-                    <div class="msg error" style="background: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 20px; border-radius: 4px;">An error occurred. Please try again.</div>
+                    <div class="msg-danger">An error occurred. Please try again.</div>
                 <?php endif; ?>
 
                 <form id="bulk-delete-form" action="delete-booking.php" method="POST">
-                    <div class="top" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div class="top">
                         <div>
-                            <h1 class="dashboard-title" style="margin: 0;">Bookings</h1>
+                            <h1 class="dashboard-title">Bookings</h1>
                             <span>Total Items Sold: (<?= $totalOrders ?>)</span>
                         </div>
                         <?php if ($totalOrders > 0): ?>
-                            <div class="bulk-actions" style="display: flex; gap: 10px;">
-                                <button type="submit" name="delete_selected" onclick="return confirm('Are you sure you want to delete selected items?')" style="background: #d9534f; color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer;">
+                            <div class="bulk-actions">
+                                <button type="submit" name="delete_selected" onclick="return confirm('Are you sure you want to delete selected items?')" class="action-btn danger">
                                     <i class="fa-solid fa-trash-can"></i> Delete Selected
                                 </button>
-                                <button type="submit" name="delete_all" onclick="return confirm('WARNING: Are you sure you want to DELETE ALL bookings?')" style="background: #c9302c; color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                                <button type="submit" name="delete_all" onclick="return confirm('WARNING: Are you sure you want to DELETE ALL bookings?')" class="action-btn danger-bold">
                                     <i class="fa-solid fa-dumpster"></i> Delete All
                                 </button>
                             </div>
@@ -167,17 +175,17 @@ $stmtUser->close();
                             <?php if ($totalOrders > 0): $sn = 1; ?>
                                 <?php while ($row = $orderResult->fetch_assoc()): ?>
                                     <?php
-                                    // यदि Empty/Null भए सुरुमा सधैं Pending मान्ने
+                                    // à¤¯à¤¦à¤¿ Empty/Null à¤­à¤ à¤¸à¥à¤°à¥à¤®à¤¾ à¤¸à¤§à¥ˆà¤‚ Pending à¤®à¤¾à¤¨à¥à¤¨à¥‡
                                     $current_status = !empty($row['order_status']) ? $row['order_status'] : 'Pending';
                                     ?>
-                                    <tr>
+                                    <tr draggable="true" data-order-id="<?= (int)$row['order_id'] ?>">
                                         <td>
                                             <input type="checkbox" name="order_ids[]" value="<?= (int)$row['order_id'] ?>" class="select-item">
                                         </td>
                                         <td><?= $sn++; ?></td>
                                         <td>
-                                            <div class="pkg" style="display: flex; align-items: center; gap: 10px;">
-                                                <img src="../admin/uploads/<?= htmlspecialchars($row['image']) ?>" alt="" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;">
+                                            <div class="pkg">
+                                                <img src="../admin/uploads/<?= htmlspecialchars($row['image']) ?>" alt="">
                                                 <div>
                                                     <strong><?= htmlspecialchars($row['title']) ?></strong><br>
                                                     <small><?= (int)$row['days'] ?> Days</small>
@@ -185,19 +193,18 @@ $stmtUser->close();
                                             </div>
                                         </td>
                                         <td><?= date("d/m/Y", strtotime($row['order_date'])) ?></td>
-                                        <td>Rs <?= number_format($row['price'], 2) ?></td>
+                                        <td><?= format_price($row['price']) ?></td>
                                         <td><?= (int)$row['quantity'] ?></td>
-                                        <td><strong>Rs <?= number_format($row['price'] * $row['quantity'], 2) ?></strong></td>
+                                        <td><strong><?= format_price($row['price'] * $row['quantity']) ?></strong></td>
                                         <td>
                                             <!-- Status Badge Color -->
-                                            <span class="badge" style="padding: 5px 10px; border-radius: 4px; color: #fff; background: <?= ($current_status === 'Completed') ? '#0a500f' : ($current_status === 'Cancelled' ? '#652228' : '#e67e22'); ?>">
-                                                <?= htmlspecialchars($current_status) ?>
-                                            </span>
+<span class="badge <?= strtolower(htmlspecialchars($current_status)) ?>">
+                                        <?= htmlspecialchars($current_status) ?>
+                                    </span>
                                         </td>
                                         <td>
-                                            <div style="display: flex; gap: 8px; align-items: center;">
-                                                <!-- Admin Control Dropdown -->
-                                                <select onchange="updateStatus(<?= (int)$row['order_id'] ?>, this.value)" style="padding: 5px; border-radius: 4px; border: 1px solid #ccc; cursor: pointer;">
+                                            <div class="action-group">
+                                                <select class="status-select" onchange="updateStatus(<?= (int)$row['order_id'] ?>, this.value)">
                                                     <option value="Pending" <?= $current_status === 'Pending' ? 'selected' : '' ?>>Pending</option>
                                                     <option value="Completed" <?= $current_status === 'Completed' ? 'selected' : '' ?>>Completed</option>
                                                     <option value="Cancelled" <?= $current_status === 'Cancelled' ? 'selected' : '' ?>>Cancelled</option>
@@ -205,7 +212,7 @@ $stmtUser->close();
 
                                                 <a href="delete-booking.php?id=<?= (int)$row['order_id'] ?>"
                                                     onclick="return confirm('Are you sure you want to delete this booking?')"
-                                                    style="background: #dc3545; color: white; padding: 6px 10px; border-radius: 4px; text-decoration: none; display: inline-block;">
+                                                    class="action-btn red sm">
                                                     <i class="fa-solid fa-trash"></i>
                                                 </a>
                                             </div>
@@ -221,11 +228,16 @@ $stmtUser->close();
                     </table>
                 </form>
 
-                <form id="status-form" action="update-status.php" method="POST" style="display:none;">
+                <form id="status-form" action="update-status.php" method="POST" class="hidden-form">
                     <input type="hidden" name="order_id" id="status_order_id">
                     <input type="hidden" name="status" id="status_value">
                 </form>
             </div>
+
+            <a id="trash-bin" class="trash-bin" href="./trash-booking.php" title="Drop a booking row here, or click to view trash">
+                <i class="fa-solid fa-trash-can"></i>
+                <span><?= $trash_count ?> item(s) in trash</span>
+            </a>
         </div>
     </div>
 
@@ -248,6 +260,46 @@ $stmtUser->close();
                 document.getElementById('status_value').value = status;
                 document.getElementById('status-form').submit();
             }
+        }
+
+        const trashBin = document.getElementById('trash-bin');
+        const bookingRows = document.querySelectorAll('.admin-table tbody tr[data-order-id]');
+
+        bookingRows.forEach(row => {
+            row.setAttribute('draggable', 'true');
+            row.classList.add('booking-row');
+
+            row.addEventListener('dragstart', function(e) {
+                row.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', row.dataset.orderId);
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            row.addEventListener('dragend', function() {
+                row.classList.remove('dragging');
+                trashBin.classList.remove('bin-active');
+            });
+        });
+
+        if (trashBin) {
+            trashBin.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                trashBin.classList.add('bin-active');
+            });
+
+            trashBin.addEventListener('dragleave', function() {
+                trashBin.classList.remove('bin-active');
+            });
+
+            trashBin.addEventListener('drop', function(e) {
+                e.preventDefault();
+                trashBin.classList.remove('bin-active');
+                const orderId = e.dataTransfer.getData('text/plain');
+                if (orderId && confirm('Are you sure you want to delete this booking?')) {
+                    window.location.href = 'delete-booking.php?id=' + encodeURIComponent(orderId);
+                }
+            });
         }
     </script>
 </body>

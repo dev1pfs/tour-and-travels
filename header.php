@@ -1,5 +1,6 @@
 <?php
 require_once 'database.php';
+require_once 'config.php';
 session_start();
 if (isset($_SESSION['admin_id'])) {
     header("Location: admin-dashboard.php");
@@ -14,9 +15,9 @@ if (isset($_SESSION['admin_id'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tour and Travels</title>
-    <link rel="stylesheet" href="./assets/vendors/swiper/css/swiper-bundle.min.css">
-    <link rel="stylesheet" href="./assets/vendors/fontawesome/css/all.min.css">
-    <link rel="stylesheet" href="./assets/css/style.css">
+    <link rel="stylesheet" href="/assets/vendors/swiper/css/swiper-bundle.min.css">
+    <link rel="stylesheet" href="/assets/vendors/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="/assets/css/style.css">
     <link rel="icon" href="/assets/image/tour-travels-booking-fevicon.svg">
 </head>
 
@@ -45,7 +46,7 @@ if (isset($_SESSION['admin_id'])) {
                 <div class="header-wrapper">
                     <div class="header-logo">
                         <a href="/index.php">
-                            <img src="./assets/image/tour-travels-booking-logo.svg" alt="logo">
+                            <img src="/assets/image/tour-travels-booking-logo.svg" alt="logo">
                         </a>
                     </div>
                     <div class="navbar-wrapper">
@@ -69,10 +70,10 @@ if (isset($_SESSION['admin_id'])) {
                                 <a class="nav-link" href="#">Page <i class="fa-solid fa-angle-down"></i></a>
                                 <ul class="sub-menu">
                                     <li>
-                                        <a href="<?php echo isset($_SESSION['user_id']) ? './cart.php' : './login-page.php?redirect=cart.php'; ?>">Shop</a>
+                                        <a href="/shop.php">Shop</a>
                                     </li>
                                     <li>
-                                        <a href="<?php echo isset($_SESSION['user_id']) ? './my-account.php' : './login-page.php?redirect=my-account.php'; ?>">My Account</a>
+                                        <a href="<?php echo isset($_SESSION['user_id']) ? '/my-account.php' : '/login-page.php?redirect=my-account.php'; ?>">My Account</a>
                                     </li>
                                     <li>
                                         <a href="/contact-page.php">Contact</a>
@@ -111,7 +112,7 @@ if (isset($_SESSION['admin_id'])) {
                             ?>
 
                             <div class="card-icon">
-                                <a href="<?php echo isset($_SESSION['user_id']) ? './cart.php' : './login-page.php?redirect=cart.php'; ?>">
+                                <a href="<?php echo isset($_SESSION['user_id']) ? '/cart.php' : '/login-page.php?redirect=cart.php'; ?>">
                                     <i class="fa fa-shopping-cart"></i>
                                     <span><?php echo $cart_count; ?></span>
                                 </a>
@@ -126,6 +127,9 @@ if (isset($_SESSION['admin_id'])) {
                                     $dashboardLink = ($_SESSION['role'] === 'admin')
                                         ? '/admin/dashboard.php'
                                         : '/my-account.php';
+                                    $profileLink = ($_SESSION['role'] === 'admin')
+                                        ? '/admin/profile.php'
+                                        : '/account.php';
                                     ?>
                                     <div class="dropdown">
                                         <a href="<?php echo $dashboardLink; ?>" class="btn btn-primary" id="userMenu">
@@ -133,6 +137,7 @@ if (isset($_SESSION['admin_id'])) {
                                         </a>
 
                                         <ul class="dropdown-menu" aria-labelledby="userMenu">
+                                            <li><a class="dropdown-item" href="<?php echo $profileLink; ?>">Profile</a></li>
                                             <li><a class="dropdown-item" href="<?php echo $dashboardLink; ?>">Dashboard</a></li>
                                             <li><a class="dropdown-item" href="/logout.php">Logout</a></li>
                                         </ul>
@@ -151,7 +156,7 @@ if (isset($_SESSION['admin_id'])) {
             <div id="closebtn">
                 <i class="fa-solid fa-xmark"></i>
             </div>
-            <form action="search.php" method="GET" autocomplete="off">
+            <form action="/search.php" method="GET" autocomplete="off">
                 <input type="text" id="product-search" name="q" placeholder="Search packages..." required>
                 <div class="submit-btn-wrap">
                     <button type="submit"></button>

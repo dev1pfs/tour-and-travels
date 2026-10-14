@@ -50,15 +50,25 @@ if (isset($_POST['submit_comment'])) {
     }
 }
 
-$stmt = $conn->prepare("SELECT * FROM packages WHERE id = ?");
+$stmt = $conn->prepare("SELECT * FROM packages WHERE id = ? AND deleted_at IS NULL");
 $stmt->bind_param("i", $package_id);
 $stmt->execute();
 $package = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
+require_once 'recommend-functions.php';
+$recommendations = recommend_similar_packages($conn, $package_id, 4);
+
 include('header.php');
 ?>
 
+<section class="page-header">
+    <div class="container">
+        <div class="page-title">
+            <h1><?php echo htmlspecialchars($package['title']); ?></h1>
+        </div>
+    </div>
+</section>
 
 <main>
     <section class="info block">
@@ -74,7 +84,7 @@ include('header.php');
 
                     <p><?php echo nl2br(htmlspecialchars($package['description'])); ?></p>
 
-                    <p><strong>Price:</strong> $ <?php echo number_format($package['price']); ?></p>
+                    <p><strong>Price:</strong> <?php echo format_price($package['price'], null, 0); ?></p>
 
                     <p><strong>Days:</strong> <?php echo (int)$package['days']; ?> Days</p>
 
@@ -86,6 +96,19 @@ include('header.php');
             </div>
         </div>
     </section>
+
+    <?php if (!empty($recommendations)): ?>
+        <section class="block recommendation-section">
+            <div class="container">
+                <div class="title-wrapper">
+                    <span class="subtitle">Recommendation</span>
+                    <h2>You May <strong>Also Like</strong></h2>
+                    <p>Recommended using collaborative filtering based on what other customers booked together.</p>
+                </div>
+                <?= render_recommendation_row($recommendations) ?>
+            </div>
+        </section>
+    <?php endif; ?>
 
     <section class="comment-section block">
         <div class="container">

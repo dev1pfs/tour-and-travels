@@ -18,24 +18,25 @@ if (!isset($data['orderID']) || !isset($_SESSION['user_id'])) {
     exit;
 }
 
-$user_id = $_SESSION['user_id'];
+$user_id = (int)$_SESSION['user_id'];
 $paypal_order_id = $data['orderID'];
 $amount = $data['amount'];
 
 try {
     $conn->begin_transaction();
 
+    // बुकिङ गर्दा Status सधैं 'Pending' हुनुपर्छ
     $stmt = $conn->prepare("INSERT INTO orders (user_id, paypal_order_id, total_amount, status) VALUES (?, ?, ?, 'Pending')");
     $stmt->bind_param("isd", $user_id, $paypal_order_id, $amount);
     $stmt->execute();
-    $order_id = $conn->insert_id;
+    $order_id = (int)$conn->insert_id;
     $stmt->close();
 
-    $conn->query("INSERT INTO order_items (order_id, package_id, quantity, price) 
-                  SELECT $order_id, package_id, quantity, price 
-                  FROM cart_items 
-                  JOIN packages ON packages.id = cart_items.package_id 
-                  WHERE user_id = $user_id");
+    $conn->query("INSERT INTO order_items (order_id, package_id, quantity, price)
+        SELECT " . $order_id . ", package_id, quantity, price
+        FROM cart_items
+        JOIN packages ON packages.id = cart_items.package_id
+        WHERE user_id = " . $user_id);
 
     $stmt = $conn->prepare("DELETE FROM cart_items WHERE user_id = ?");
     $stmt->bind_param("i", $user_id);
@@ -44,7 +45,10 @@ try {
 
     $conn->commit();
 
-    echo json_encode(['success' => true, 'order_id' => $order_id]);
+    // Payment सफल भए सधैं thank-you.php मा पठाउने
+    $redirect = 'thank-you.php?order_id=' . $order_id;
+
+    echo json_encode(['success' => true, 'order_id' => $order_id, 'redirect' => $redirect]);
 } catch (Exception $e) {
     $conn->rollback();
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);

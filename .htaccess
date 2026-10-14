@@ -1,0 +1,5 @@
+ErrorDocument 403 /404-page.php
+ErrorDocument 404 /404-page.php
+
+Options -Indexes
+DirectoryIndex index.php

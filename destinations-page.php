@@ -5,7 +5,7 @@ if ($conn->connect_error) {
     die("Connection Failed: " . $conn->connect_error);
 }
 
-$sql = "SELECT * FROM destinations ORDER BY id DESC";
+$sql = "SELECT * FROM destinations WHERE deleted_at IS NULL ORDER BY id DESC";
 $result = $conn->query($sql);
 ?>
 

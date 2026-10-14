@@ -7,7 +7,7 @@ if ($conn->connect_error) {
 }
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-    header("Location: dashboard.php");
+    header("Location: /404-page.php");
     exit;
 }
 
@@ -95,7 +95,7 @@ $stmt->close();
                                 <a href="/index.php">Visit Site</a>
                             </li>
                             <li>
-                                <a href="/cart.php">Visit Store</a>
+                                <a href="/shop.php">Visit Store</a>
                             </li>
                         </ul>
                     </li>
@@ -131,7 +131,7 @@ $stmt->close();
                     ?>
 
                     <div class="user-menu">
-                        <span class="btn btn-primary user-name"><?php echo htmlspecialchars($user['fullname']); ?></span>
+                        <a href="./profile.php" class="btn btn-primary user-name"><?php echo htmlspecialchars($user['fullname']); ?></a>
                         <a href="/login-page.php" class="logout-btn btn btn-primary">Logout</a>
                     </div>
                 <?php else: ?>
@@ -154,6 +154,7 @@ $stmt->close();
 
             <ul class="sidebar-menu">
                 <li class="nav-link active"><a href="./dashboard.php">Dashboard</a></li>
+                <li class="nav-link"><a href="./profile.php">Profile</a></li>
 
                 <li class="nav-link">
                     <a href="#" class="has-submenu">Destinations <i class="fa-solid fa-angle-right"></i></a>
@@ -179,6 +180,7 @@ $stmt->close();
                 </li>
                 <li class="nav-link"><a href="./my-booking.php">Bookings</a></li>
                 <li class="nav-link"><a href="./comments.php">Comments</a></li>
+                <li class="nav-link"><a href="./messages.php">Mail</a></li>
             </ul>
         </div>
 
@@ -203,7 +205,13 @@ $stmt->close();
                         </div>
                         <div class="form-group">
                             <label>New Password</label>
-                            <input type="password" name="password">
+                            <div class="password-field">
+                                <input type="password" name="password">
+                                <button type="button" class="eye-btn pw-toggle">
+                                    <i class="fa-regular fa-eye eye-open"></i>
+                                    <i class="fa-solid fa-eye-slash eye-closed"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="form-group role">
 

@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $email = trim($_POST['email']);
     $password = $_POST['password'];
 
-    $stmt = $pdo->prepare("SELECT id, fullname, password, role FROM users WHERE email = ?");
+    $stmt = $pdo->prepare("SELECT id, fullname, password, role FROM users WHERE email = ? AND deleted_at IS NULL");
     $stmt->execute([$email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 

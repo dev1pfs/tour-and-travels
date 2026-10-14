@@ -13,8 +13,9 @@ if (isset($_GET['q'])) {
     $q = $conn->real_escape_string($_GET['q']);
 
     $sql = "SELECT * FROM packages 
-            WHERE title LIKE '%$q%' 
-            OR description LIKE '%$q%'";
+            WHERE (title LIKE '%$q%' 
+            OR description LIKE '%$q%')
+            AND deleted_at IS NULL";
     $result = $conn->query($sql);
 
     if ($result->num_rows > 0) {
@@ -68,7 +69,7 @@ if (isset($_GET['q'])) {
 
                                     <div class="meta">
                                         <span class="price">
-                                            <?php echo $p['price']; ?>
+                                            <?php echo format_price($p['price'], $p['base-currency'], 0); ?>
                                         </span>
                                         <span class="day">
                                             <?php echo $p['days']; ?> days

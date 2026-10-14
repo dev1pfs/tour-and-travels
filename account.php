@@ -121,16 +121,33 @@ if (isset($_POST['change_password'])) {
                     <form class="password-change" method="POST">
                         <div class="form-group">
                             <label>Current Password</label>
-                            <input type="password" name="current_password" required>
+                            <div class="password-field">
+                                <input type="password" name="current_password" required>
+                                <button type="button" class="eye-btn pw-toggle">
+                                    <i class="fa-regular fa-eye eye-open"></i>
+                                    <i class="fa-solid fa-eye-slash eye-closed"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>New Password</label>
-                            <input type="password" name="new_password" required>
+                            <div class="password-field">
+                                <input type="password" name="new_password" required>
+                                <button type="button" class="eye-btn pw-toggle">
+                                    <i class="fa-regular fa-eye eye-open"></i>
+                                    <i class="fa-solid fa-eye-slash eye-closed"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>Confirm New Password</label>
-                            <input type="password" name="confirm_password" required>
-
+                            <div class="password-field">
+                                <input type="password" name="confirm_password" required>
+                                <button type="button" class="eye-btn pw-toggle">
+                                    <i class="fa-regular fa-eye eye-open"></i>
+                                    <i class="fa-solid fa-eye-slash eye-closed"></i>
+                                </button>
+                            </div>
                         </div>
                         <button class="btn btn-primary" name="change_password">Change Password</button>
                     </form>

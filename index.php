@@ -6,7 +6,7 @@ if ($conn->connect_error) {
     die("Connection Failed: " . $conn->connect_error);
 }
 
-$sql = "SELECT * FROM destinations ORDER BY id DESC";
+$sql = "SELECT * FROM destinations WHERE deleted_at IS NULL ORDER BY id DESC";
 $result = $conn->query($sql);
 ?>
 
@@ -70,6 +70,54 @@ $result = $conn->query($sql);
     <!-- banner end  -->
 
 
+    <!-- about website start -->
+    <section class="about block">
+        <div class="container">
+            <div class="about-website-wrapper">
+                <div class="about-website-content">
+                    <span class="subtitle">About</span>
+                    <h2>Your One-Stop Platform For <strong>Travel Booking</strong></h2>
+                    <p>
+                        Tour and Travels Booking System helps you find the perfect trip in minutes —
+                        browse beautiful destinations, compare tour packages and book everything
+                        from one simple place.
+                    </p>
+                    <p>
+                        No complicated steps. Add your favourite packages to the cart, pay securely
+                        and get your booking confirmed right away.
+                    </p>
+
+                    <ul class="about-website-list">
+                        <li>
+                            <i class="fa-solid fa-circle-check"></i>
+                            Top destinations and handpicked tour packages
+                        </li>
+                        <li>
+                            <i class="fa-solid fa-circle-check"></i>
+                            Simple cart and fast secure checkout
+                        </li>
+                        <li>
+                            <i class="fa-solid fa-circle-check"></i>
+                            Instant booking confirmation and order history
+                        </li>
+                    </ul>
+
+                    <a href="destinations-page.php" class="btn btn-primary">Discover Destinations</a>
+                </div>
+
+                <div class="about-website-image">
+                    <img src="./assets/image/banner-image1_2.jpg" alt="Tour and Travels">
+                    <div class="about-website-badge">
+                        <strong>100%</strong>
+                        <span>Easy Online Booking</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- about website end -->
+
+
     <!-- popular destination start -->
     <section class="popular-destination block">
         <div class="container">
@@ -112,6 +160,47 @@ $result = $conn->query($sql);
     <!-- popular destination end  -->
 
 
+    <!-- how it works start -->
+    <section class="how-it-works">
+        <div class="container">
+            <div class="how-it-works-content title-wrapper">
+                <span class="subtitle">Easy Steps</span>
+                <h2>How It <strong>Works</strong></h2>
+            </div>
+
+            <div class="how-it-works-wrapper">
+                <div class="how-it-works-step">
+                    <span class="step-number">01</span>
+                    <div class="step-icon">
+                        <i class="fa-solid fa-map-location-dot"></i>
+                    </div>
+                    <h3>Browse Destinations</h3>
+                    <p>Explore our destinations and choose the package that fits your style and budget.</p>
+                </div>
+
+                <div class="how-it-works-step">
+                    <span class="step-number">02</span>
+                    <div class="step-icon">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                    </div>
+                    <h3>Book Your Trip</h3>
+                    <p>Add packages to your cart and complete a smooth secure payment in minutes.</p>
+                </div>
+
+                <div class="how-it-works-step">
+                    <span class="step-number">03</span>
+                    <div class="step-icon">
+                        <i class="fa-solid fa-plane-departure"></i>
+                    </div>
+                    <h3>Enjoy Your Travel</h3>
+                    <p>Get instant confirmation and start packing for your unforgettable journey.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- how it works end -->
+
+
     <!-- package start  -->
     <section class="package block">
         <div class="container">
@@ -122,7 +211,7 @@ $result = $conn->query($sql);
 
             <div class="package-card-wrapper">
                 <?php
-                $sql = "SELECT * FROM packages ORDER BY id DESC";
+                $sql = "SELECT * FROM packages WHERE deleted_at IS NULL ORDER BY id DESC";
                 $result = $conn->query($sql);
                 ?>
 
@@ -154,8 +243,7 @@ $result = $conn->query($sql);
 
                             <div class="meta">
                                 <span class="price">
-                                    <?php echo $row['base-currency']; ?>
-                                    <?php echo $row['price']; ?>
+                                    <?php echo format_price($row['price'], $row['base-currency'], 0); ?>
                                 </span>
                                 <span class="day"><?php echo $row['days']; ?> days</span>
                             </div>
@@ -173,6 +261,8 @@ $result = $conn->query($sql);
         </div>
     </section>
     <!-- package end -->
+
+
 
 
 

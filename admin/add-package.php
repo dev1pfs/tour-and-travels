@@ -10,6 +10,8 @@ if ($_SESSION['role'] != "admin") {
     exit();
 }
 
+require_once __DIR__ . '/../config.php';
+
 $success = "";
 $error = "";
 
@@ -79,7 +81,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                                 <a href="/index.php">Visit Site</a>
                             </li>
                             <li>
-                                <a href="/cart.php">Visit Store</a>
+                                <a href="/shop.php">Visit Store</a>
                             </li>
                         </ul>
                     </li>
@@ -115,7 +117,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     ?>
 
                     <div class="user-menu">
-                        <span class="btn btn-primary user-name"><?php echo htmlspecialchars($user['fullname']); ?></span>
+                        <a href="./profile.php" class="btn btn-primary user-name"><?php echo htmlspecialchars($user['fullname']); ?></a>
                         <a href="/login-page.php" class="logout-btn btn btn-primary">Logout</a>
                     </div>
                 <?php else: ?>
@@ -137,6 +139,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             <ul class="sidebar-menu">
                 <li class="nav-link active"><a href="./dashboard.php">Dashboard</a></li>
+                <li class="nav-link"><a href="./profile.php">Profile</a></li>
 
                 <li class="nav-link">
                     <a href="#" class="has-submenu">Destinations <i class="fa-solid fa-angle-right"></i></a>
@@ -163,6 +166,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
                 <li class="nav-link"><a href="./my-booking.php">Bookings</a></li>
                 <li class="nav-link"><a href="./comments.php">Comments</a></li>
+                <li class="nav-link"><a href="./messages.php">Mail</a></li>
             </ul>
         </div>
 
@@ -172,11 +176,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <h2>Add New Package</h2>
 
                 <?php if (!empty($success)) { ?>
-                    <p style="color:green;"><?= $success ?></p>
+                    <p class="form-success"><?= $success ?></p>
                 <?php } ?>
 
                 <?php if (!empty($error)) { ?>
-                    <p style="color:red;"><?= $error ?></p>
+                    <p class="form-error"><?= $error ?></p>
                 <?php } ?>
 
                 <form action="" method="POST" enctype="multipart/form-data">
@@ -209,8 +213,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     <div class="form-group">
                         <label>Currency:</label>
                         <select name="base-currency" required>
-                            <option value="Rs">Rs</option>
-                            <option value="$">$</option>
+                            <option value="<?= SITE_CURRENCY ?>"><?= SITE_CURRENCY ?></option>
                         </select>
                     </div>
 

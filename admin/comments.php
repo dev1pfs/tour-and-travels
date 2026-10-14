@@ -2,7 +2,7 @@
 session_start();
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-    header("Location: login.php");
+    header("Location: /404-page.php");
     exit;
 }
 
@@ -11,16 +11,22 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+$msg = $_GET['msg'] ?? "";
+
 $total_comments = $conn->query(
-    "SELECT COUNT(*) AS total FROM comments"
+    "SELECT COUNT(*) AS total FROM comments WHERE deleted_at IS NULL"
 )->fetch_assoc()['total'];
 
 $parent_comments = $conn->query(
-    "SELECT COUNT(*) AS total FROM comments WHERE comment_parent = 0"
+    "SELECT COUNT(*) AS total FROM comments WHERE comment_parent = 0 AND deleted_at IS NULL"
 )->fetch_assoc()['total'];
 
 $reply_comments = $conn->query(
-    "SELECT COUNT(*) AS total FROM comments WHERE comment_parent != 0"
+    "SELECT COUNT(*) AS total FROM comments WHERE comment_parent != 0 AND deleted_at IS NULL"
+)->fetch_assoc()['total'];
+
+$trash_count = $conn->query(
+    "SELECT COUNT(*) AS total FROM comments WHERE deleted_at IS NOT NULL"
 )->fetch_assoc()['total'];
 
 $sql = "
@@ -34,6 +40,7 @@ $sql = "
     FROM comments c
     LEFT JOIN users u ON c.user_id = u.id
     LEFT JOIN packages p ON c.comment_package_id = p.id
+    WHERE c.deleted_at IS NULL
     ORDER BY c.comment_date DESC
 ";
 
@@ -71,12 +78,12 @@ $comments = $conn->query($sql);
                                 <a href="/index.php">Visit Site</a>
                             </li>
                             <li>
-                                <a href="/cart.php">Visit Store</a>
+                                <a href="/shop.php">Visit Store</a>
                             </li>
                         </ul>
                     </li>
                     <?php
-                    $result = $conn->query("SELECT COUNT(*) AS total FROM comments");
+                    $result = $conn->query("SELECT COUNT(*) AS total FROM comments WHERE deleted_at IS NULL");
                     $comment_count = $result->fetch_assoc()['total'];
                     ?>
 
@@ -107,7 +114,7 @@ $comments = $conn->query($sql);
                     ?>
 
                     <div class="user-menu">
-                        <span class="btn btn-primary user-name"><?php echo htmlspecialchars($user['fullname']); ?></span>
+                        <a href="./profile.php" class="btn btn-primary user-name"><?php echo htmlspecialchars($user['fullname']); ?></a>
                         <a href="/login-page.php" class="logout-btn btn btn-primary">Logout</a>
                     </div>
                 <?php else: ?>
@@ -129,6 +136,7 @@ $comments = $conn->query($sql);
 
             <ul class="sidebar-menu">
                 <li class="nav-link active"><a href="./dashboard.php">Dashboard</a></li>
+                <li class="nav-link"><a href="./profile.php">Profile</a></li>
 
                 <li class="nav-link">
                     <a href="#" class="has-submenu">Destinations <i class="fa-solid fa-angle-right"></i></a>
@@ -155,114 +163,157 @@ $comments = $conn->query($sql);
 
                 <li class="nav-link"><a href="./my-booking.php">Bookings</a></li>
                 <li class="nav-link"><a href="./comments.php">Comments</a></li>
+                <li class="nav-link"><a href="./messages.php">Mail</a></li>
             </ul>
         </div>
 
         <div class="dashboard-holder-right">
-            <div class="all-destination comment-table">
-                <style>
-                    .dashboard-cards {
-                        display: flex;
-                        gap: 20px;
-                        margin-bottom: 30px;
-                    }
+            <div class="booking-content">
 
-                    .card {
-                        background: #fff;
-                        padding: 20px;
-                        border-radius: 6px;
-                        box-shadow: 0 2px 6px rgba(0, 0, 0, .1);
-                        flex: 1;
-                        text-align: center;
-                    }
+                <?php if ($msg === "deleted"): ?>
+                    <div class="msg-warn">Selected comment(s) moved to trash.</div>
+                <?php elseif ($msg === "all_deleted"): ?>
+                    <div class="msg-warn">All comments moved to trash.</div>
+                <?php elseif ($msg === "error"): ?>
+                    <div class="msg-danger">An error occurred. Please try again.</div>
+                <?php endif; ?>
 
-                    .admin-table {
-                        width: 100%;
-                        border-collapse: collapse;
-                    }
-
-                    .admin-table th,
-                    .admin-table td {
-                        padding: 12px;
-                        border: 1px solid #ddd;
-                    }
-
-                    .badge.main {
-                        background: #007bff;
-                        color: #fff;
-                        padding: 3px 8px;
-                        border-radius: 4px;
-                    }
-
-                    .badge.reply {
-                        background: #28a745;
-                        color: #fff;
-                        padding: 3px 8px;
-                        border-radius: 4px;
-                    }
-
-                    .btn.delete {
-                        color: red;
-                        text-decoration: none;
-                    }
-                </style>
-                <h1 class="dashboard-title">All Comments</h1>
-
-                <table>
-                    <thead>
-                        <tr>
-                            <th>S.N</th>
-                            <th>User</th>
-                            <th>Package</th>
-                            <th>Comment</th>
-                            <th>Type</th>
-                            <th>Date</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        <?php
-                        if ($comments && $comments->num_rows > 0):
-                            $sn = 1;
-                            while ($row = $comments->fetch_assoc()):
-                        ?>
-                                <tr>
-                                    <td><?php echo $sn++; ?></td>
-                                    <td><?php echo htmlspecialchars($row['user_name'] ?? 'Deleted User'); ?></td>
-                                    <td><?php echo htmlspecialchars($row['package_title'] ?? 'Deleted Package'); ?></td>
-                                    <td><?php echo htmlspecialchars($row['comment_content']); ?></td>
-                                    <td>
-                                        <?php echo $row['comment_parent'] == 0
-                                            ? '<span class="badge main">Main</span>'
-                                            : '<span class="badge reply">Reply</span>'; ?>
-                                    </td>
-                                    <td><?php echo date("d M Y", strtotime($row['comment_date'])); ?></td>
-                                    <td>
-                                        <a href="delete-comment.php?id=<?php echo $row['comment_id']; ?>"
-                                            class="btn delete"
-                                            onclick="return confirm('Delete this comment?')">
-                                            Delete
-                                        </a>
-                                    </td>
-                                </tr>
-                            <?php
-                            endwhile;
-                        else:
-                            ?>
-                            <tr>
-                                <td colspan="7">No comments found</td>
-                            </tr>
+                <form id="bulk-delete-form" action="delete-comment.php" method="POST">
+                    <div class="top">
+                        <div>
+                            <h1 class="dashboard-title">All Comments</h1>
+                            <span>Total Comments: (<?= (int)$total_comments ?>)</span>
+                        </div>
+                        <?php if ($total_comments > 0): ?>
+                            <div class="bulk-actions">
+                                <button type="submit" name="delete_selected" onclick="return confirm('Are you sure you want to delete selected comments?')" class="action-btn danger">
+                                    <i class="fa-solid fa-trash-can"></i> Delete Selected
+                                </button>
+                                <button type="submit" name="delete_all" onclick="return confirm('WARNING: Are you sure you want to DELETE ALL comments?')" class="action-btn danger-bold">
+                                    <i class="fa-solid fa-dumpster"></i> Delete All
+                                </button>
+                            </div>
                         <?php endif; ?>
-                    </tbody>
-                </table>
+                    </div>
+
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th width="40"><input type="checkbox" id="selectAll"></th>
+                                <th>S.N</th>
+                                <th>User</th>
+                                <th>Package</th>
+                                <th>Comment</th>
+                                <th>Type</th>
+                                <th>Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            <?php
+                            if ($comments && $comments->num_rows > 0):
+                                $sn = 1;
+                                while ($row = $comments->fetch_assoc()):
+                            ?>
+                                    <tr draggable="true" data-comment-id="<?= (int)$row['comment_id'] ?>">
+                                        <td>
+                                            <input type="checkbox" name="comment_ids[]" value="<?= (int)$row['comment_id'] ?>" class="select-item">
+                                        </td>
+                                        <td><?php echo $sn++; ?></td>
+                                        <td><?php echo htmlspecialchars($row['user_name'] ?? 'Deleted User'); ?></td>
+                                        <td><?php echo htmlspecialchars($row['package_title'] ?? 'Deleted Package'); ?></td>
+                                        <td><?php echo htmlspecialchars($row['comment_content']); ?></td>
+                                        <td>
+                                            <?php echo $row['comment_parent'] == 0
+                                                ? '<span class="badge main">Main</span>'
+                                                : '<span class="badge reply">Reply</span>'; ?>
+                                        </td>
+                                        <td><?php echo date("d M Y", strtotime($row['comment_date'])); ?></td>
+                                        <td>
+                                            <div class="action-group">
+                                                <a href="delete-comment.php?id=<?= (int)$row['comment_id'] ?>"
+                                                    onclick="return confirm('Are you sure you want to delete this comment?')"
+                                                    class="action-btn red sm">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php
+                                endwhile;
+                            else:
+                                ?>
+                                <tr>
+                                    <td colspan="8" align="center">No comments found</td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </form>
             </div>
+
+            <a id="trash-bin" class="trash-bin" href="./trash-comment.php" title="Drop a comment row here, or click to view trash">
+                <i class="fa-solid fa-trash-can"></i>
+                <span><?= (int)$trash_count ?> item(s) in trash</span>
+            </a>
         </div>
 
     </div>
 
 
     <script src="../assets/js/script.js"></script>
+    <script>
+        const selectAll = document.getElementById('selectAll');
+        const selectItems = document.querySelectorAll('.select-item');
+
+        if (selectAll) {
+            selectAll.addEventListener('change', function() {
+                selectItems.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+            });
+        }
+
+        const trashBin = document.getElementById('trash-bin');
+        const commentRows = document.querySelectorAll('.admin-table tbody tr[data-comment-id]');
+
+        commentRows.forEach(row => {
+            row.classList.add('booking-row');
+
+            row.addEventListener('dragstart', function(e) {
+                row.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', row.dataset.commentId);
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            row.addEventListener('dragend', function() {
+                row.classList.remove('dragging');
+                trashBin.classList.remove('bin-active');
+            });
+        });
+
+        if (trashBin) {
+            trashBin.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                trashBin.classList.add('bin-active');
+            });
+
+            trashBin.addEventListener('dragleave', function() {
+                trashBin.classList.remove('bin-active');
+            });
+
+            trashBin.addEventListener('drop', function(e) {
+                e.preventDefault();
+                trashBin.classList.remove('bin-active');
+                const commentId = e.dataTransfer.getData('text/plain');
+                if (commentId && confirm('Are you sure you want to delete this comment?')) {
+                    window.location.href = 'delete-comment.php?id=' + encodeURIComponent(commentId);
+                }
+            });
+        }
+    </script>
 
 </body>
 

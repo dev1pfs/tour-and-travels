@@ -12,7 +12,7 @@ if (!isset($_GET['id'])) {
 
 $id = intval($_GET['id']);
 
-$stmt = $conn->prepare("SELECT * FROM destinations WHERE id=?");
+$stmt = $conn->prepare("SELECT * FROM destinations WHERE id=? AND deleted_at IS NULL");
 $stmt->bind_param("i", $id);
 $stmt->execute();
 $result = $stmt->get_result();

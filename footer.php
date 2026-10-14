@@ -4,7 +4,7 @@
             <div class="footer-content">
                 <div class="footer-logo">
                     <a href="/index.php">
-                        <img src="./assets/image/tour-travels-booking-footer-logo.svg" alt="Footer Logo">
+                        <img src="/assets/image/tour-travels-booking-footer-logo.svg" alt="Footer Logo">
                     </a>
                 </div>
                 <p>
@@ -12,18 +12,18 @@
                 </p>
                 <ul class="social-media">
                     <li>
-                        <a href="https://www.facebook.com/chetkumari.shrestha.96">
+                        <a href="https://www.facebook.com/manoj.shrestha.9861" target="_blank">
                             <i class="fa-brands fa-facebook-f"></i>
                         </a>
                     </li>
                     <li>
-                        <a href="https://www.twitter.com/">
-                            <i class="fa-brands fa-twitter"></i>
+                        <a href="https://www.instagram.com/manoj2977034/" target="_blank">
+                            <i class="fa-brands fa-instagram"></i>
                         </a>
                     </li>
                     <li>
-                        <a href="https://www.instagram.com/manojshrestha401/">
-                            <i class="fa-brands fa-instagram"></i>
+                        <a href="https://wa.me/9861888292" target="_blank">
+                            <i class="fa-brands fa-whatsapp"></i>
                         </a>
                     </li>
                 </ul>
@@ -41,7 +41,7 @@
                         <a href="/destinations-page.php">Destinations</a>
                     </li>
                     <li>
-                        <a href="<?php echo isset($_SESSION['user_id']) ? './cart.php' : './login-page.php?redirect=cart.php'; ?>">Shop</a>
+                        <a href="/shop.php">Shop</a>
                     </li>
                     <li>
                         <a href="/contact-page.php">Contact</a>
@@ -52,16 +52,16 @@
                 <h6 class="footer-title h3">Top Destinations</h6>
                 <ul class="footer-list">
                     <li>
-                        <a href="destination-single.php?id=12">Kathmandu</a>
+                        <a href="/destination-single.php?id=12">Kathmandu</a>
                     </li>
                     <li>
-                        <a href="destination-single.php?id=17">Pokhara</a>
+                        <a href="/destination-single.php?id=17">Pokhara</a>
                     </li>
                     <li>
-                        <a href="destination-single.php?id=14">Lumbini</a>
+                        <a href="/destination-single.php?id=14">Lumbini</a>
                     </li>
                     <li>
-                        <a href="destination-single.php?id=15">Sindhupalchock</a>
+                        <a href="/destination-single.php?id=15">Sindhupalchock</a>
                     </li>
                 </ul>
             </div>
@@ -69,12 +69,15 @@
                 <h6 class="footer-title h3">Contact Us</h6>
                 <ul class="footer-list">
                     <li>
+                        <i class="fa-solid fa-location-dot"></i>
                         <p>Nepal, Kathmandu, Ashon</p>
                     </li>
                     <li>
+                        <i class="fa-solid fa-phone"></i>
                         <a href="tel:9861888292">+977 9861888292</a>
                     </li>
                     <li>
+                        <i class="fa-solid fa-envelope"></i>
                         <a href="mailto:manoj98618@gmail.com">manoj98618@gmail.com</a>
                     </li>
                 </ul>
@@ -91,8 +94,8 @@
     <a href="#" id="scroll-top"><i class="fa-solid fa-arrow-up"></i></a>
 </div>
 
-<script src="./assets/vendors/swiper/js/swiper-bundle.min.js"></script>
-<script src="./assets/js/script.js"></script>
+<script src="/assets/vendors/swiper/js/swiper-bundle.min.js"></script>
+<script src="/assets/js/script.js"></script>
 </body>
 
 </html>

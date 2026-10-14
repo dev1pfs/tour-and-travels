@@ -30,12 +30,27 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $stmt->bind_param("sss", $name, $email, $message);
 
         if ($stmt->execute()) {
-            $to = "your_email@example.com";
-            $subject = "New Contact Message from $name";
-            $body = "Name: $name\nEmail: $email\n\nMessage:\n$message";
-            $headers = "From: $email";
+            $adminEmail = "manoj98618@gmail.com";
+            $siteName   = "Tour and Travels Booking System";
 
-            if (mail($to, $subject, $body, $headers)) {
+            $adminHeaders  = "MIME-Version: 1.0\r\n";
+            $adminHeaders .= "Content-type: text/plain; charset=UTF-8\r\n";
+            $adminHeaders .= "From: $siteName <$adminEmail>\r\n";
+            $adminHeaders .= "Reply-To: $email\r\n";
+
+            $adminSubject = "New Contact Message from $name";
+            $adminBody    = "Name: $name\nEmail: $email\n\nMessage:\n$message";
+            $adminSent    = mail($adminEmail, $adminSubject, $adminBody, $adminHeaders);
+
+            $userHeaders  = "MIME-Version: 1.0\r\n";
+            $userHeaders .= "Content-type: text/plain; charset=UTF-8\r\n";
+            $userHeaders .= "From: $siteName <$adminEmail>\r\n";
+
+            $userSubject = "We received your message - $siteName";
+            $userBody    = "Dear $name,\n\nThank you for contacting us. We have received your message and will get back to you soon.\n\nYour message:\n$message\n\nRegards,\n$siteName";
+            mail($email, $userSubject, $userBody, $userHeaders);
+
+            if ($adminSent) {
                 $success = "Your message has been sent successfully!";
                 $name = $email = $message = "";
             } else {
@@ -71,6 +86,7 @@ $conn->close();
                     <div class="contact-content">
                         <h2>Need Any Help? Contact us</h2>
                         <?php if ($error) echo "<p class='error'>$error</p>"; ?>
+                        <?php if ($success) echo "<p class='success'>$success</p>"; ?>
 
                         <form id="contactForm" method="post" action="">
                             <div class="form-group">

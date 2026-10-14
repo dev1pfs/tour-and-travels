@@ -81,7 +81,7 @@ $result = $stmt->get_result();
                                             <td><?php echo $sn++; ?></td>
                                             <td><?php echo date("M j, Y", strtotime($row['order_date'])); ?></td>
                                             <td>
-                                                <strong>$ <?php echo number_format($row['total_amount'], 2); ?></strong>
+                                                <strong><?php echo format_price($row['total_amount']); ?></strong>
                                                 <br><small><?php echo $row['total_items']; ?> item(s)</small>
                                             </td>
                                             <td class="thank-you-btn-wrap">

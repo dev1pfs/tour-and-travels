@@ -42,18 +42,13 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-
-
-
-
-
     // banner swiper js 
     var banner = new Swiper(".swiperbanner", {
         loop: true,
         slidesPerView: 1,
         speed: 2000,
         autoplay: {
-            delay: 2000,
+            delay: 2000000000000000000,
             disableOnInteraction: false,
         },
         navigation: {
@@ -121,8 +116,6 @@ document.addEventListener("DOMContentLoaded", function () {
     document.addEventListener('click', () => {
         searchForm.classList.remove('open');
     });
-
-
 
 
 });
@@ -213,6 +206,40 @@ document.addEventListener("DOMContentLoaded", function () {
             }, 2000);
         }
     });
+});
+
+// password field hide/show eye js
+document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".pw-toggle").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const input = btn.closest(".password-field").querySelector("input");
+            const open = btn.querySelector(".eye-open");
+            const closed = btn.querySelector(".eye-closed");
+            if (input.type === "password") {
+                input.type = "text";
+                open.style.display = "inline";
+                closed.style.display = "none";
+            } else {
+                input.type = "password";
+                open.style.display = "none";
+                closed.style.display = "inline";
+            }
+        });
+    });
+});
+
+// profile avatar auto-upload js
+document.addEventListener("DOMContentLoaded", function () {
+    const avatarInput = document.getElementById("avatar-input");
+    const avatarForm = document.getElementById("avatar-upload-form");
+
+    if (avatarInput && avatarForm) {
+        avatarInput.addEventListener("change", function () {
+            if (this.files && this.files.length > 0) {
+                avatarForm.submit();
+            }
+        });
+    }
 });
 
 

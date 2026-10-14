@@ -12,11 +12,22 @@ if ($conn->connect_error) {
     die("Connection Failed: " . $conn->connect_error);
 }
 
-$users = $conn->query("SELECT COUNT(*) AS total FROM users WHERE role='user'")->fetch_assoc()['total'];
+require_once __DIR__ . '/../config.php';
 
-$packages     = $conn->query("SELECT COUNT(*) AS total FROM packages")->fetch_assoc()['total'];
-$destinations = $conn->query("SELECT COUNT(*) AS total FROM destinations")->fetch_assoc()['total'];
+$users        = $conn->query("SELECT COUNT(*) AS total FROM users WHERE role='user' AND deleted_at IS NULL")->fetch_assoc()['total'];
+$packages     = $conn->query("SELECT COUNT(*) AS total FROM packages WHERE deleted_at IS NULL")->fetch_assoc()['total'];
+$destinations = $conn->query("SELECT COUNT(*) AS total FROM destinations WHERE deleted_at IS NULL")->fetch_assoc()['total'];
 $orders       = $conn->query("SELECT COUNT(*) AS total FROM orders")->fetch_assoc()['total'];
+$comments     = $conn->query("SELECT COUNT(*) AS total FROM comments")->fetch_assoc()['total'];
+$revenue      = $conn->query("SELECT COALESCE(SUM(total_amount), 0) AS total FROM orders")->fetch_assoc()['total'];
+
+$recent_orders = $conn->query(
+    "SELECT o.id, o.created_at, o.total_amount, o.status, u.fullname
+     FROM orders o
+     JOIN users u ON o.user_id = u.id
+     ORDER BY o.id DESC
+     LIMIT 5"
+);
 
 ?>
 
@@ -30,7 +41,6 @@ $orders       = $conn->query("SELECT COUNT(*) AS total FROM orders")->fetch_asso
     <link rel="stylesheet" href="./../assets/css/style.css">
     <link rel="icon" href="./../assets/image/tour-travels-booking-fevicon.svg">
     <title>Tour and Travels</title>
-
 </head>
 
 <body class="dashboard-body">
@@ -48,7 +58,7 @@ $orders       = $conn->query("SELECT COUNT(*) AS total FROM orders")->fetch_asso
                                 <a href="/index.php">Visit Site</a>
                             </li>
                             <li>
-                                <a href="/cart.php">Visit Store</a>
+                                <a href="/shop.php">Visit Store</a>
                             </li>
                         </ul>
                     </li>
@@ -84,7 +94,7 @@ $orders       = $conn->query("SELECT COUNT(*) AS total FROM orders")->fetch_asso
                     ?>
 
                     <div class="user-menu">
-                        <span class="btn btn-primary user-name"><?php echo htmlspecialchars($user['fullname']); ?></span>
+                        <a href="./profile.php" class="btn btn-primary user-name"><?php echo htmlspecialchars($user['fullname']); ?></a>
                         <a href="/login-page.php" class="logout-btn btn btn-primary">Logout</a>
                     </div>
                 <?php else: ?>
@@ -106,6 +116,7 @@ $orders       = $conn->query("SELECT COUNT(*) AS total FROM orders")->fetch_asso
 
             <ul class="sidebar-menu">
                 <li class="nav-link active"><a href="./dashboard.php">Dashboard</a></li>
+                <li class="nav-link"><a href="./profile.php">Profile</a></li>
 
                 <li class="nav-link">
                     <a href="#" class="has-submenu">Destinations <i class="fa-solid fa-angle-right"></i></a>
@@ -131,6 +142,7 @@ $orders       = $conn->query("SELECT COUNT(*) AS total FROM orders")->fetch_asso
                 </li>
                 <li class="nav-link"><a href="./my-booking.php">Bookings</a></li>
                 <li class="nav-link"><a href="./comments.php">Comments</a></li>
+                <li class="nav-link"><a href="./messages.php">Mail</a></li>
             </ul>
         </div>
 
@@ -139,35 +151,100 @@ $orders       = $conn->query("SELECT COUNT(*) AS total FROM orders")->fetch_asso
                 <h1 class="dashboard-title">Dashboard</h1>
                 <div class="dashboard-card-wrap">
                     <div class="card">
-                        <h3>Users</h3>
-                        <span><?= $users ?></span>
+                        <div class="card-icon"><i class="fa-solid fa-users"></i></div>
+                        <div class="card-foot">
+                            <h3>Users</h3>
+                            <span><?= $users ?></span>
+                        </div>
                     </div>
 
                     <div class="card">
-                        <h3>Packages</h3>
-                        <span><?= $packages ?></span>
+                        <div class="card-icon"><i class="fa-solid fa-suitcase"></i></div>
+                        <div class="card-foot">
+                            <h3>Packages</h3>
+                            <span><?= $packages ?></span>
+                        </div>
                     </div>
 
                     <div class="card">
-                        <h3>Destinations</h3>
-                        <span><?= $destinations ?></span>
+                        <div class="card-icon"><i class="fa-solid fa-location-dot"></i></div>
+                        <div class="card-foot">
+                            <h3>Destinations</h3>
+                            <span><?= $destinations ?></span>
+                        </div>
                     </div>
 
                     <div class="card">
-                        <h3>Orders</h3>
-                        <span><?= $orders ?></span>
+                        <div class="card-icon"><i class="fa-solid fa-cart-shopping"></i></div>
+                        <div class="card-foot">
+                            <h3>Orders</h3>
+                            <span><?= $orders ?></span>
+                        </div>
                     </div>
+
+                    <div class="card">
+                        <div class="card-icon"><i class="fa-solid fa-comments"></i></div>
+                        <div class="card-foot">
+                            <h3>Comments</h3>
+                            <span><?= $comments ?></span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-icon"><i class="fa-solid fa-dollar-sign"></i></div>
+                        <div class="card-foot">
+                            <h3>Revenue</h3>
+                            <span><?= format_price($revenue, null, 0) ?></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="recent-orders">
+                    <h3>Recent Orders</h3>
+
+                    <table class="recent-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if ($recent_orders && $recent_orders->num_rows > 0): ?>
+                                <?php while ($order = $recent_orders->fetch_assoc()): ?>
+                                    <tr>
+                                        <td>#<?= (int)$order['id'] ?></td>
+                                        <td><?= htmlspecialchars($order['fullname']) ?></td>
+                                        <td><?= format_price($order['total_amount']) ?></td>
+                                        <td>
+                                            <span class="status-badge <?= htmlspecialchars($order['status']) ?>">
+                                                <?= htmlspecialchars($order['status']) ?>
+                                            </span>
+                                        </td>
+                                        <td><?= date("M j, Y", strtotime($order['created_at'])) ?></td>
+                                    </tr>
+                                <?php endwhile; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="5" class="empty-cell">No orders yet.</td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
                 </div>
 
                 <div class="charts">
 
                     <div class="chart-card">
-                        <h3 style="margin-bottom: 15px;">Overview Bar Chart</h3>
+                        <h3>Overview Bar Chart</h3>
                         <canvas id="barChart"></canvas>
                     </div>
 
                     <div class="chart-card">
-                        <h3 style="margin-bottom: 15px;">Overview Pie Chart</h3>
+                        <h3>Overview Pie Chart</h3>
                         <canvas id="pieChart"></canvas>
                     </div>
 
@@ -188,22 +265,24 @@ $orders       = $conn->query("SELECT COUNT(*) AS total FROM orders")->fetch_asso
             users: <?= $users ?>,
             packages: <?= $packages ?>,
             destinations: <?= $destinations ?>,
-            orders: <?= $orders ?>
+            orders: <?= $orders ?>,
+            comments: <?= $comments ?>
         };
 
         new Chart(document.getElementById("barChart"), {
             type: "bar",
             data: {
-                labels: ["Users", "Packages", "Destinations", "Orders"],
+                labels: ["Users", "Packages", "Destinations", "Orders", "Comments"],
                 datasets: [{
                     label: "Total Count",
                     data: [
                         dataValues.users,
                         dataValues.packages,
                         dataValues.destinations,
-                        dataValues.orders
+                        dataValues.orders,
+                        dataValues.comments
                     ],
-                    backgroundColor: ["#007bff", "#28a745", "#ffc107", "#dc3545"]
+                    backgroundColor: ["#007bff", "#28a745", "#ffc107", "#dc3545", "#6610f2"]
                 }]
             }
         });
@@ -211,15 +290,16 @@ $orders       = $conn->query("SELECT COUNT(*) AS total FROM orders")->fetch_asso
         new Chart(document.getElementById("pieChart"), {
             type: "pie",
             data: {
-                labels: ["Users", "Packages", "Destinations", "Orders"],
+                labels: ["Users", "Packages", "Destinations", "Orders", "Comments"],
                 datasets: [{
                     data: [
                         dataValues.users,
                         dataValues.packages,
                         dataValues.destinations,
-                        dataValues.orders
+                        dataValues.orders,
+                        dataValues.comments
                     ],
-                    backgroundColor: ["#007bff", "#28a745", "#ffc107", "#dc3545"]
+                    backgroundColor: ["#007bff", "#28a745", "#ffc107", "#dc3545", "#6610f2"]
                 }]
             }
         });

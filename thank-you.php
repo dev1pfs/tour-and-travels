@@ -44,15 +44,15 @@ $result = $stmt->get_result();
                     <tr>
                         <td><?= htmlspecialchars($item['title']) ?></td>
                         <td><?= $item['quantity'] ?></td>
-                        <td>$ <?= number_format($item['price'], 2) ?></td>
-                        <td>$ <?= number_format($subtotal, 2) ?></td>
+                        <td><?= format_price($item['price']) ?></td>
+                        <td><?= format_price($subtotal) ?></td>
                     </tr>
                 <?php endwhile; ?>
             </tbody>
             <tfoot>
                 <tr>
                     <th colspan="3" class="text-right">Grand Total</th>
-                    <th>$ <?= number_format($grandTotal, 2) ?></th>
+                    <th><?= format_price($grandTotal) ?></th>
                 </tr>
             </tfoot>
         </table>

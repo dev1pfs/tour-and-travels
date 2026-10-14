@@ -11,18 +11,31 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
     exit;
 }
 
-if (isset($_GET['delete_id'])) {
-    $delete_id = intval($_GET['delete_id']); // sanitize input
-    $stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
-    $stmt->bind_param("i", $delete_id);
-    $stmt->execute();
-    $stmt->close();
+$msg = $_GET['msg'] ?? "";
 
-    header("Location: users.php");
-    exit;
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $bulk_action = $_POST['bulk_action'] ?? '';
+
+    if ($bulk_action === 'delete_all') {
+        $conn->query("UPDATE users SET deleted_at = NOW() WHERE role != 'admin' AND deleted_at IS NULL");
+        header("Location: users.php?msg=all_deleted");
+        exit;
+    }
+
+    if ($bulk_action === 'delete_selected' && !empty($_POST['user_ids'])) {
+        $user_ids = array_map('intval', $_POST['user_ids']);
+        $ids_str = implode(',', $user_ids);
+        $conn->query("UPDATE users SET deleted_at = NOW() WHERE id IN ($ids_str) AND deleted_at IS NULL");
+        header("Location: users.php?msg=deleted");
+        exit;
+    }
 }
 
-$users = $conn->query("SELECT * FROM users ORDER BY created_at DESC");
+$users = $conn->query("SELECT * FROM users WHERE deleted_at IS NULL ORDER BY created_at DESC");
+$totalUsers = $users ? $users->num_rows : 0;
+
+$trashResult = $conn->query("SELECT COUNT(*) AS total FROM users WHERE deleted_at IS NOT NULL");
+$trash_count = $trashResult ? (int)$trashResult->fetch_assoc()['total'] : 0;
 ?>
 
 
@@ -36,13 +49,6 @@ $users = $conn->query("SELECT * FROM users ORDER BY created_at DESC");
     <link rel="stylesheet" href="./../assets/css/style.css">
     <link rel="icon" href="./../assets/image/tour-travels-booking-fevicon.svg">
     <title>Tour and Travels</title>
-    <script>
-        function confirmDelete(userId) {
-            if (confirm("Are you sure you want to delete this user?")) {
-                window.location.href = "users.php?delete_id=" + userId;
-            }
-        }
-    </script>
 </head>
 
 <body class="dashboard-body">
@@ -60,7 +66,7 @@ $users = $conn->query("SELECT * FROM users ORDER BY created_at DESC");
                                 <a href="/index.php">Visit Site</a>
                             </li>
                             <li>
-                                <a href="/cart.php">Visit Store</a>
+                                <a href="/shop.php">Visit Store</a>
                             </li>
                         </ul>
                     </li>
@@ -96,7 +102,7 @@ $users = $conn->query("SELECT * FROM users ORDER BY created_at DESC");
                     ?>
 
                     <div class="user-menu">
-                        <span class="btn btn-primary user-name"><?php echo htmlspecialchars($user['fullname']); ?></span>
+                        <a href="./profile.php" class="btn btn-primary user-name"><?php echo htmlspecialchars($user['fullname']); ?></a>
                         <a href="/login-page.php" class="logout-btn btn btn-primary">Logout</a>
                     </div>
                 <?php else: ?>
@@ -118,6 +124,7 @@ $users = $conn->query("SELECT * FROM users ORDER BY created_at DESC");
 
             <ul class="sidebar-menu">
                 <li class="nav-link active"><a href="./dashboard.php">Dashboard</a></li>
+                <li class="nav-link"><a href="./profile.php">Profile</a></li>
 
                 <li class="nav-link">
                     <a href="#" class="has-submenu">Destinations <i class="fa-solid fa-angle-right"></i></a>
@@ -143,59 +150,155 @@ $users = $conn->query("SELECT * FROM users ORDER BY created_at DESC");
                 </li>
                 <li class="nav-link"><a href="./my-booking.php">Bookings</a></li>
                 <li class="nav-link"><a href="./comments.php">Comments</a></li>
+                <li class="nav-link"><a href="./messages.php">Mail</a></li>
             </ul>
         </div>
 
         <div class="dashboard-holder-right">
-            <div class="dashboard-container all-users">
-                <h2>
-                    All Users
-                    <a href="add-user.php" class="add-btn">Add User</a>
-                </h2>
+            <div class="booking-content">
 
-                <table>
-                    <thead>
-                        <tr>
-                            <th>S.N</th>
-                            <th>Full Name</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Created At</th>
-                            <th>Action</th>
-                        </tr>
+                <?php if ($msg === "deleted"): ?>
+                    <div class="msg-warn">Selected user(s) moved to trash.</div>
+                <?php elseif ($msg === "all_deleted"): ?>
+                    <div class="msg-warn">All users moved to trash.</div>
+                <?php elseif ($msg === "error"): ?>
+                    <div class="msg-danger">An error occurred. Please try again.</div>
+                <?php endif; ?>
 
-                    </thead>
-                    <tbody>
+                <form id="bulk-delete-form" action="delete-user.php" method="POST">
+                    <div class="top">
+                        <div>
+                            <h1 class="dashboard-title">Users</h1>
+                            <span>Total Users: (<?= $totalUsers ?>)</span>
+                        </div>
+                        <div class="bulk-actions">
+                            <a href="add-user.php" class="action-btn primary">
+                                <i class="fa-solid fa-plus"></i> Add User
+                            </a>
+                            <?php if ($totalUsers > 0): ?>
+                                <button type="submit" name="delete_selected" onclick="return confirm('Are you sure you want to delete selected users?')" class="action-btn danger">
+                                    <i class="fa-solid fa-trash-can"></i> Delete Selected
+                                </button>
+                                <button type="submit" name="delete_all" onclick="return confirm('WARNING: Are you sure you want to DELETE ALL users? (Admins are kept)')" class="action-btn danger-bold">
+                                    <i class="fa-solid fa-user-xmark"></i> Delete All
+                                </button>
+                            <?php endif; ?>
+                        </div>
+                    </div>
 
-                        <?php
-                        $sn = 1;
-                        while ($row = $users->fetch_assoc()):
-                        ?>
+                    <table class="admin-table">
+                        <thead>
                             <tr>
-                                <td><?php echo $sn++; ?></td>
-                                <td><?= htmlspecialchars($row['fullname']) ?></td>
-                                <td><?= htmlspecialchars($row['email']) ?></td>
-                                <td class="<?= $row['role'] === 'admin' ? 'role-admin' : 'role-user' ?>">
-                                    <?= ucfirst($row['role']) ?>
-                                </td>
-                                <td><?= date("Y-m-d", strtotime($row['created_at'])) ?></td>
-                                <td class="actions">
-                                    <a href="edit-user.php?id=<?= $row['id'] ?>">Edit</a>
-                                    <a href="javascript:void(0);" onclick="confirmDelete(<?= $row['id'] ?>)" class="delete">Delete</a>
-                                </td>
+                                <th width="40"><input type="checkbox" id="selectAll"></th>
+                                <th>S.N</th>
+                                <th>Full Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Created At</th>
+                                <th>Action</th>
                             </tr>
-                        <?php endwhile; ?>
-                    </tbody>
-
-                </table>
-
+                        </thead>
+                        <tbody>
+                            <?php if ($totalUsers > 0): $sn = 1; ?>
+                                <?php while ($row = $users->fetch_assoc()): ?>
+                                    <tr draggable="true" data-user-id="<?= (int)$row['id'] ?>">
+                                        <td>
+                                            <input type="checkbox" name="user_ids[]" value="<?= (int)$row['id'] ?>" class="select-item">
+                                        </td>
+                                        <td><?= $sn++; ?></td>
+                                        <td><?= htmlspecialchars($row['fullname']) ?></td>
+                                        <td><?= htmlspecialchars($row['email']) ?></td>
+                                        <td>
+                                            <span class="badge <?= $row['role'] === 'admin' ? 'admin' : 'user' ?>">
+                                                <?= ucfirst($row['role']) ?>
+                                            </span>
+                                        </td>
+                                        <td><?= date("Y-m-d", strtotime($row['created_at'])) ?></td>
+                                        <td>
+                                            <div class="action-group">
+                                                <a href="edit-user.php?id=<?= (int)$row['id'] ?>" class="action-btn primary sm">
+                                                    <i class="fa-solid fa-pen"></i>
+                                                </a>
+                                                <a href="delete-user.php?id=<?= (int)$row['id'] ?>"
+                                                    onclick="return confirm('Are you sure you want to delete this user?')"
+                                                    class="action-btn red sm">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endwhile; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="7" align="center">No users found.</td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </form>
             </div>
         </div>
 
+        <a id="trash-bin" class="trash-bin" href="./trash-users.php" title="Drop a user here, or click to view trash">
+            <i class="fa-solid fa-trash-can"></i>
+            <span><?= $trash_count ?> user(s) in trash</span>
+        </a>
     </div>
 
 
     <script src="../assets/js/script.js"></script>
+    <script>
+        const selectAll = document.getElementById('selectAll');
+        const selectItems = document.querySelectorAll('.select-item');
+
+        if (selectAll) {
+            selectAll.addEventListener('change', function() {
+                selectItems.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+            });
+        }
+
+        const trashBin = document.getElementById('trash-bin');
+        const userRows = document.querySelectorAll('tr[data-user-id]');
+
+        userRows.forEach(row => {
+            row.classList.add('booking-row');
+            row.setAttribute('draggable', 'true');
+
+            row.addEventListener('dragstart', function(e) {
+                row.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', row.dataset.userId);
+                e.dataTransfer.effectAllowed = 'move';
+            });
+
+            row.addEventListener('dragend', function() {
+                row.classList.remove('dragging');
+                trashBin.classList.remove('bin-active');
+            });
+        });
+
+        if (trashBin) {
+            trashBin.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                trashBin.classList.add('bin-active');
+            });
+
+            trashBin.addEventListener('dragleave', function() {
+                trashBin.classList.remove('bin-active');
+            });
+
+            trashBin.addEventListener('drop', function(e) {
+                e.preventDefault();
+                trashBin.classList.remove('bin-active');
+                const userId = e.dataTransfer.getData('text/plain');
+                if (userId && confirm('Are you sure you want to delete this user?')) {
+                    window.location.href = 'delete-user.php?id=' + encodeURIComponent(userId);
+                }
+            });
+        }
+    </script>
 
 
 

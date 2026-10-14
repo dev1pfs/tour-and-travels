@@ -7,7 +7,7 @@ if ($conn->connect_error) {
 session_start();
 
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-    header("Location: dashboard.php");
+    header("Location: /404-page.php");
     exit;
 }
 
@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <a href="/index.php">Visit Site</a>
                             </li>
                             <li>
-                                <a href="/cart.php">Visit Store</a>
+                                <a href="/shop.php">Visit Store</a>
                             </li>
                         </ul>
                     </li>
@@ -111,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ?>
 
                     <div class="user-menu">
-                        <span class="btn btn-primary user-name"><?php echo htmlspecialchars($user['fullname']); ?></span>
+                        <a href="./profile.php" class="btn btn-primary user-name"><?php echo htmlspecialchars($user['fullname']); ?></a>
                         <a href="/login-page.php" class="logout-btn btn btn-primary">Logout</a>
                     </div>
                 <?php else: ?>
@@ -135,6 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <ul class="sidebar-menu">
                 <li class="nav-link active"><a href="./dashboard.php">Dashboard</a></li>
+                <li class="nav-link"><a href="./profile.php">Profile</a></li>
 
                 <li class="nav-link">
                     <a href="#" class="has-submenu">Destinations <i class="fa-solid fa-angle-right"></i></a>
@@ -160,6 +161,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </li>
                 <li class="nav-link"><a href="./my-booking.php">Bookings</a></li>
                 <li class="nav-link"><a href="./comments.php">Comments</a></li>
+                <li class="nav-link"><a href="./messages.php">Mail</a></li>
             </ul>
         </div>
 
@@ -169,11 +171,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <h2>Add User</h2>
 
                     <?php if ($error) : ?>
-                        <p style="color:red;"><?php echo $error; ?></p>
+                        <p class="form-error"><?php echo $error; ?></p>
                     <?php endif; ?>
 
                     <?php if ($success) : ?>
-                        <p style="color:green;"><?php echo $success; ?></p>
+                        <p class="form-success"><?php echo $success; ?></p>
                     <?php endif; ?>
 
                     <form method="post">
@@ -187,7 +189,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                         <div class="form-group">
                             <label>Password:</label>
-                            <input name="password" type="password" required>
+                            <div class="password-field">
+                                <input name="password" type="password" required>
+                                <button type="button" class="eye-btn pw-toggle">
+                                    <i class="fa-regular fa-eye eye-open"></i>
+                                    <i class="fa-solid fa-eye-slash eye-closed"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>Role:</label>

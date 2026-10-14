@@ -33,7 +33,7 @@ $cartItems = $stmt->get_result();
 <section class="page-header">
     <div class="container">
         <div class="page-title">
-            <h1>Shop</h1>
+            <h1>Cart</h1>
         </div>
     </div>
 </section>
@@ -78,8 +78,8 @@ $cartItems = $stmt->get_result();
                                     </form>
                                 </td>
 
-                                <td>$ <?php echo $item['price']; ?></td>
-                                <td>$ <?php echo $total; ?></td>
+                                <td><?php echo format_price($item['price'], null, 0); ?></td>
+                                <td><?php echo format_price($total, null, 0); ?></td>
 
                                 <td>
                                     <a class="remove-from-cart" href="remove-from-cart.php?id=<?php echo $item['cart_id']; ?>">Remove</a>
@@ -91,7 +91,7 @@ $cartItems = $stmt->get_result();
                     <tfoot>
                         <tr>
                             <td colspan="5" align="right"><strong>Grand Total</strong></td>
-                            <td colspan="2"><strong>$ <?php echo $grandTotal; ?></strong></td>
+                            <td colspan="2"><strong><?php echo format_price($grandTotal, null, 0); ?></strong></td>
                         </tr>
                     </tfoot>
 
@@ -103,7 +103,7 @@ $cartItems = $stmt->get_result();
                 <h2 class="cart-empty">Your cart is empty.</h2>
                 <div class="package-card-wrapper">
                     <?php
-                    $pkg = $conn->query("SELECT * FROM packages");
+                    $pkg = $conn->query("SELECT * FROM packages WHERE deleted_at IS NULL");
                     while ($row = $pkg->fetch_assoc()):
                     ?>
                         <div class="package-card">
@@ -120,7 +120,7 @@ $cartItems = $stmt->get_result();
                                 </h3>
                                 <div class="meta">
                                     <span class="price">
-                                        <?php echo $row['base-currency']; ?> <?php echo $row['price']; ?>
+                                        <?php echo format_price($row['price'], $row['base-currency'], 0); ?>
                                     </span>
                                     <span class="day"><?php echo $row['days']; ?> days</span>
                                 </div>

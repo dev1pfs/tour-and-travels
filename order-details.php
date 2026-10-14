@@ -94,18 +94,18 @@ $subtotal = 0;
                             ?>
                                 <tr>
                                     <td><?php echo $item['title']; ?> × <?php echo $item['quantity']; ?></td>
-                                    <td>$ <?php echo number_format($line_total, 2); ?></td>
+                                    <td><?php echo format_price($line_total); ?></td>
                                 </tr>
                             <?php endwhile; ?>
 
                             <tr>
                                 <td class="label">Subtotal:</td>
-                                <td>$ <?php echo number_format($subtotal, 2); ?></td>
+                                <td><?php echo format_price($subtotal); ?></td>
                             </tr>
 
                             <tr>
                                 <td class="label">Total:</td>
-                                <td><strong>$ <?php echo number_format($order['total_amount'], 2); ?></strong></td>
+                                <td><strong><?php echo format_price($order['total_amount']); ?></strong></td>
                             </tr>
 
                         </tbody>

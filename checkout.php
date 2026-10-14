@@ -37,11 +37,18 @@ while ($row = $cartItems->fetch_assoc()) {
 }
 ?>
 
+<section class="page-header">
+    <div class="container">
+        <div class="page-title">
+            <h1>Checkout</h1>
+        </div>
+    </div>
+</section>
+
 <section class="checkout block">
     <div class="container">
-        <h2>Checkout</h2>
 
-        <p><strong>Total Amount: $ <?= number_format($grandTotal, 2) ?></strong></p>
+        <p><strong>Total Amount: <?= format_price($grandTotal) ?></strong></p>
 
         <div id="paypal-pay"></div>
     </div>
@@ -82,7 +89,7 @@ while ($row = $cartItems->fetch_assoc()) {
                     .then(res => res.json())
                     .then(res => {
                         if (res.success) {
-                            window.location.href = "thank-you.php?order_id=" + res.order_id;
+                            window.location.href = res.redirect;
                         } else {
                             alert("Payment succeeded, but failed to create order: " + res.error);
                         }

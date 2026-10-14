@@ -18,7 +18,7 @@ if (!isset($_GET['id'])) {
 
 $id = intval($_GET['id']);
 
-$stmt = $conn->prepare("SELECT * FROM destinations WHERE id=?");
+$stmt = $conn->prepare("SELECT * FROM destinations WHERE id=? AND deleted_at IS NULL");
 $stmt->bind_param("i", $id);
 $stmt->execute();
 $data = $stmt->get_result()->fetch_assoc();
@@ -92,7 +92,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                                 <a href="/index.php">Visit Site</a>
                             </li>
                             <li>
-                                <a href="/cart.php">Visit Store</a>
+                                <a href="/shop.php">Visit Store</a>
                             </li>
                         </ul>
                     </li>
@@ -128,7 +128,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     ?>
 
                     <div class="user-menu">
-                        <span class="btn btn-primary user-name"><?php echo htmlspecialchars($user['fullname']); ?></span>
+                        <a href="./profile.php" class="btn btn-primary user-name"><?php echo htmlspecialchars($user['fullname']); ?></a>
                         <a href="/login-page.php" class="logout-btn btn btn-primary">Logout</a>
                     </div>
                 <?php else: ?>
@@ -148,6 +148,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             </div>
             <ul class="sidebar-menu">
                 <li class="nav-link active"><a href="./dashboard.php">Dashboard</a></li>
+                <li class="nav-link"><a href="./profile.php">Profile</a></li>
                 <li class="nav-link">
                     <a href="#" class="has-submenu">Destinations <i class="fa-solid fa-angle-right"></i></a>
                     <ul class="submenu">
@@ -172,6 +173,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 </li>
                 <li class="nav-link"><a href="./my-booking.php">Bookings</a></li>
                 <li class="nav-link"><a href="./comments.php">Comments</a></li>
+                <li class="nav-link"><a href="./messages.php">Mail</a></li>
             </ul>
 
         </div>
@@ -180,7 +182,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <h2>Edit Destination</h2>
 
                 <?php if ($error): ?>
-                    <p style="color: red;"><?= $error ?></p>
+                    <p class="form-error"><?= $error ?></p>
                 <?php endif; ?>
 
                 <form action="" method="POST" enctype="multipart/form-data">
